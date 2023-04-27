@@ -1,5 +1,6 @@
 import sys
 import pygame
+import random
 from pygame.locals import *
 
 pygame.init()
@@ -41,11 +42,6 @@ class Player(pygame.sprite.Sprite):
         self.acc.x += self.vel.x * FRIC
         self.vel += self.acc
         self.pos += self.vel + 0.5 * self.acc
-
-        if self.pos.x > screenWidth:
-            self.pos.x = 0
-        if self.pos.x < 0:
-            self.pos.x = screenWidth
      
         self.rect.midbottom = self.pos
     
@@ -65,9 +61,10 @@ class Player(pygame.sprite.Sprite):
 class platform(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.surf = pygame.Surface((screenWidth, 20))
-        self.surf.fill((255,0,0))
-        self.rect = self.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
+        self.surf = pygame.Surface((random.randint(50,100), 12))
+        self.surf.fill((0,255,0))
+        self.rect = self.surf.get_rect(center = (random.randint(0,screenWidth-10), random.randint(0, screenHeight-30)))
+
 
     def move(self):
         pass
@@ -81,6 +78,11 @@ all_sprites.add(P1)
 
 platforms = pygame.sprite.Group()
 platforms.add(PT1)
+
+for x in range(random.randint(5, 6)):
+    pl = platform()
+    platforms.add(pl)
+    all_sprites.add(pl)
 
 while True:
     for event in pygame.event.get():
@@ -97,6 +99,22 @@ while True:
     for entity in all_sprites:
         window.blit(entity.surf, entity.rect)
         entity.move()       
+
+    if P1.rect.right <= screenWidth / 5:
+        P1.pos.x += abs(P1.vel.x)
+        for plat in platforms:
+            plat.rect.x += abs(P1.vel.x)
+            PT1.surf = pygame.Surface((screenWidth, 20))
+            PT1.surf.fill((255,0,0))
+            PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
+
+    if P1.rect.left >= screenWidth / 3:
+        P1.pos.x -= abs(P1.vel.x)
+        for plat in platforms:
+            plat.rect.x -= abs(P1.vel.x)
+            PT1.surf = pygame.Surface((screenWidth, 20))
+            PT1.surf.fill((255,0,0))
+            PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
 
     pygame.display.update()
     FramePerSecond.tick(FPS)
