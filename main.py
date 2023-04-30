@@ -63,25 +63,29 @@ class Player(pygame.sprite.Sprite):
                 
 
 class platform(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self,x,y,posx,posy):
+        w,h,Posx,PosY = x,y,posx,posy
         super().__init__()
-        self.surf = pygame.Surface((screenWidth, 20))
+        self.surf = pygame.Surface((w, h))
         self.surf.fill((255,0,0))
-        self.rect = self.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
+        self.rect = self.surf.get_rect(center = ((Posx,PosY)))
 
     def move(self):
         pass
 
-PT1 = platform()
+PT1 = platform(screenWidth , 20,0,screenHeight)
 P1 = Player()
+
+PT2 = platform(200,20,200,400)
 
 all_sprites = pygame.sprite.Group()
 all_sprites.add(PT1)
 all_sprites.add(P1)
+all_sprites.add(PT2)
 
 platforms = pygame.sprite.Group()
 platforms.add(PT1)
-
+platforms.add(PT2)
 while True:
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -97,6 +101,20 @@ while True:
     for entity in all_sprites:
         window.blit(entity.surf, entity.rect)
         entity.move()       
+    if P1.rect.right <= screenWidth / 5:
+        P1.pos.x += abs(P1.vel.x)
+        for plat in platforms:
+            plat.rect.x += abs(P1.vel.x)
+            PT1.surf = pygame.Surface((screenWidth, 20))
+            PT1.surf.fill((255,0,0))
+            PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
 
+    if P1.rect.left >= screenWidth / 3:
+        P1.pos.x -= abs(P1.vel.x)
+        for plat in platforms:
+            plat.rect.x -= abs(P1.vel.x)
+            PT1.surf = pygame.Surface((screenWidth, 20))
+            PT1.surf.fill((255,0,0))
+            PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
     pygame.display.update()
     FramePerSecond.tick(FPS)
