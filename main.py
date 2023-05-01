@@ -14,7 +14,7 @@ FRIC = -0.12
 FPS = 60
 
 FramePerSecond = pygame.time.Clock()
-
+font = pygame.font.SysFont(None, 30)
 window = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption("2D Game")
 
@@ -31,6 +31,8 @@ class Player(pygame.sprite.Sprite):
         self.pos = vec((10, 360))
         self.vel = vec(0,0)
         self.acc = vec(0,0)
+        self.health = 100
+        self.immunity_frames = 0
     
     def move(self):
         self.acc = vec(0,0.5)
