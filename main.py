@@ -14,11 +14,12 @@ FRIC = -0.12
 FPS = 60
 
 FramePerSecond = pygame.time.Clock()
-
+font = pygame.font.SysFont(None, 30)
 window = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption("2D Game")
 all_sprites = pygame.sprite.Group()
 platforms = pygame.sprite.Group()
+
 def get_font(size): # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/font.ttf", size)
 
@@ -32,6 +33,8 @@ class Player(pygame.sprite.Sprite):
         self.pos = vec((10, 360))
         self.vel = vec(0,0)
         self.acc = vec(0,0)
+        self.health = 100
+        self.immunity_frames = 0
 
     def move(self):
         self.acc = vec(0,0.5)
@@ -60,11 +63,19 @@ class Player(pygame.sprite.Sprite):
             if hits:
                 self.vel.y = 0
                 self.pos.y = hits[0].rect.top + 1
+        if self.immunity_frames > 0:
+            self.immunity_frames -= 1
+            if self.immunity_frames % 2 == 0:
+                self.surf.set_alpha(0)
+            else: 
+                self.surf.set_alpha(255)
+        else:
+            self.surf.set_alpha(255)
                 
 
 class platform(pygame.sprite.Sprite):
     def __init__(self,x,y,posx,posy):
-        w,h,Posx,PosY = x,y,posx,posy
+        w,h,Posx,PosY= x,y,posx,posy
         super().__init__()
         self.surf = pygame.Surface((w, h))
         self.surf.fill((255,0,0))
@@ -72,8 +83,20 @@ class platform(pygame.sprite.Sprite):
         
         all_sprites.add(self)   
         platforms.add(self)
+  
     def move(self):
         pass
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, platform):
+        super().__init__()
+        self.image = pygame.Surface((50, 50))
+        self.image.fill((255,0,0))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = platform.rect.top - self.rect.height
+
+enemies = pygame.sprite.Group() 
 
 #Level 1 Generation*******************************************************
 PT1 = platform(screenWidth , 20,0,screenHeight) # base platform
@@ -90,14 +113,15 @@ platform(500,30,2720,400)
 P1 = Player()
 all_sprites.add(P1)
 platforms.add(PT1)
+enemy1 = Enemy(random.randint(100, 800), 0, PT1)
+enemies.add(enemy1)
 
-   
 def play():
 
     while True:
 
         window.fill("black")
-
+        hits = pygame.sprite.spritecollide(P1, enemies, False)
         for event in pygame.event.get():
             if event.type == QUIT:
              pygame.quit()
@@ -105,13 +129,21 @@ def play():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     P1.jump()
+        if hits and P1.immunity_frames == 0:
+            P1.health -= 50
+            P1.immunity_frames = 60
 
-        window.fill((0,0,0))
         P1.update()
 
         for entity in all_sprites:
              window.blit(entity.surf, entity.rect)
              entity.move()       
+
+        enemies.update()
+        enemies.draw(window)
+
+        health_text = font.render(f"Health: {P1.health}", True, (255, 255, 255))
+        window.blit(health_text, (10,10))
 
         if P1.rect.right <= screenWidth / 5:
             P1.pos.x += abs(P1.vel.x)
@@ -128,6 +160,19 @@ def play():
                 PT1.surf = pygame.Surface((screenWidth, 20))
                 PT1.surf.fill((255,0,0))
                 PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
+
+        if P1.health <= 0:
+            game_over_surf = pygame.Surface((screenWidth, screenHeight))
+            game_over_surf.fill((0,0,0))
+            game_over_text = font.render("GAME OVER", True, (255, 255, 255))
+            game_over_rect = game_over_text.get_rect(center=(screenWidth/2, screenHeight/2))
+            game_over_surf.blit(game_over_text, game_over_rect)
+            window.blit(game_over_text, (screenWidth/2 - 70, screenHeight/2 - 20))
+            window.blit(game_over_surf, (0,0))
+            pygame.display.update()
+            pygame.time.wait(3000)
+            pygame.quit()
+            sys.exit()
 
         pygame.display.update()
         FramePerSecond.tick(FPS)
