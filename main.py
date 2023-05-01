@@ -17,7 +17,8 @@ FramePerSecond = pygame.time.Clock()
 
 window = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption("2D Game")
-
+all_sprites = pygame.sprite.Group()
+platforms = pygame.sprite.Group()
 def get_font(size): # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/font.ttf", size)
 
@@ -31,7 +32,7 @@ class Player(pygame.sprite.Sprite):
         self.pos = vec((10, 360))
         self.vel = vec(0,0)
         self.acc = vec(0,0)
-    
+
     def move(self):
         self.acc = vec(0,0.5)
  
@@ -62,30 +63,33 @@ class Player(pygame.sprite.Sprite):
                 
 
 class platform(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self,x,y,posx,posy):
+        w,h,Posx,PosY = x,y,posx,posy
         super().__init__()
-        self.surf = pygame.Surface((random.randint(50,100), 12))
-        self.surf.fill((0,255,0))
-        self.rect = self.surf.get_rect(center = (random.randint(0,screenWidth-10), random.randint(0, screenHeight-30)))
-
-
+        self.surf = pygame.Surface((w, h))
+        self.surf.fill((255,0,0))
+        self.rect = self.surf.get_rect(center = ((Posx,PosY)))
+        
+        all_sprites.add(self)   
+        platforms.add(self)
     def move(self):
         pass
 
-PT1 = platform()
+#Level 1 Generation*******************************************************
+PT1 = platform(screenWidth , 20,0,screenHeight) # base platform
+platform(200,20,200,400)
+platform(400,20,400,300)
+platform(300,400,600,400)
+platform(500,400,1200,400)
+platform(100,200,1600,200)
+platform(100,200,1800,400)
+platform(100,200,2000,400)
+platform(500,30,2720,400)
+#*************************************************
+
 P1 = Player()
-
-all_sprites = pygame.sprite.Group()
-all_sprites.add(PT1)
 all_sprites.add(P1)
-
-platforms = pygame.sprite.Group()
 platforms.add(PT1)
-
-for x in range(random.randint(5, 6)):
-    pl = platform()
-    platforms.add(pl)
-    all_sprites.add(pl)
 
    
 def play():
