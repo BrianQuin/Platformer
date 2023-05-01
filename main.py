@@ -1,3 +1,4 @@
+from contextlib import redirect_stderr
 import sys
 import pygame
 import random
@@ -10,7 +11,7 @@ vec = pygame.math.Vector2   #Two Demenstion
 screenWidth = 900
 screenHeight = 600
 ACC = 0.5
-FRIC = -0.12
+FRIC = -0.09
 FPS = 60
 
 FramePerSecond = pygame.time.Clock()
@@ -74,11 +75,22 @@ class Player(pygame.sprite.Sprite):
                 
 
 class platform(pygame.sprite.Sprite):
-    def __init__(self,x,y,posx,posy):
-        w,h,Posx,PosY= x,y,posx,posy
+
+    def __init__(self,x,y,posx,posy,color):
+        w,h,Posx,PosY,c= x,y,posx,posy,color
+        if c == 'r':
+            c = (200,0,0)
+        if c == 'g':
+            c = (0,200,0)
+        if c == 'b':
+            c = (0,0,200)
+        if c == 'w':
+            c = (255,255,255)
+            
+
         super().__init__()
         self.surf = pygame.Surface((w, h))
-        self.surf.fill((255,0,0))
+        self.surf.fill(c)
         self.rect = self.surf.get_rect(center = ((Posx,PosY)))
         
         all_sprites.add(self)   
@@ -99,15 +111,24 @@ class Enemy(pygame.sprite.Sprite):
 enemies = pygame.sprite.Group() 
 
 #Level 1 Generation*******************************************************
-PT1 = platform(screenWidth , 20,0,screenHeight) # base platform
-platform(200,20,200,400)
-platform(400,20,400,300)
-platform(300,400,600,400)
-platform(500,400,1200,400)
-platform(100,200,1600,200)
-platform(100,200,1800,400)
-platform(100,200,2000,400)
-platform(500,30,2720,400)
+PT1 = platform(screenWidth , 20,0,screenHeight,'g') # base platform
+platform(200,200,200,500,'b')
+platform(200,300,400,465,'b')
+platform(300,400,600,400,'b')
+platform(500,400,1200,400,'b')
+platform(100,200,1600,200,'b')
+platform(100,200,1800,400,'b')
+platform(100,200,2000,400,'b')
+platform(500,30,2720,400,'b')
+platform(475,30,3000,300,'b')
+platform(475,30,3300,400,'b')
+platform(500,40,4090,170,'w') # level 1 end goal
+platform(200,40,4600,470,'b')
+platform(200,40,4800,330,'b')
+platform(40,40,4500,270,'b')
+platform(600,1000,5100,470,'b')
+
+
 #*************************************************
 
 P1 = Player()
@@ -150,7 +171,7 @@ def play():
             for plat in platforms:
                 plat.rect.x += abs(P1.vel.x)
                 PT1.surf = pygame.Surface((screenWidth, 20))
-                PT1.surf.fill((255,0,0))
+                PT1.surf.fill((0,200,0))
                 PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
 
         if P1.rect.left >= screenWidth / 3:
@@ -158,7 +179,7 @@ def play():
             for plat in platforms:
                 plat.rect.x -= abs(P1.vel.x)
                 PT1.surf = pygame.Surface((screenWidth, 20))
-                PT1.surf.fill((255,0,0))
+                PT1.surf.fill((0,200,0))
                 PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
 
         if P1.health <= 0:
