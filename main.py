@@ -126,23 +126,32 @@ class platform(pygame.sprite.Sprite):
     def move(self):
         pass
 
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, platform):
+class Trap(pygame.sprite.Sprite):
+    '''
+    Class that will create traps that will hurt the player (works similar to platform)
+    '''
+    def __init__(self,x,y,platform,c):
+        color = c
         super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill((255,0,0))
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = platform.rect.top - self.rect.height
+        self.surf = pygame.Surface((x, y))
+        self.surf.fill((255,255,0))
+        self.color = color
+        self.rect = self.surf.get_rect()
+        self.platform = platform
+        self.rect.midbottom = self.platform.rect.midtop
+        
+        all_sprites.add(self)   
+        platforms.add(self)
 
-enemies = pygame.sprite.Group() 
+    def move(self):
+        pass
 
 #Level 1 Generation*******************************************************
 PT1 = platform(screenWidth , 20,0,screenHeight,'g') # base platform
-platform(200,200,200,500,'b')
-platform(200,300,400,465,'b')
-platform(300,400,600,400,'b')
-platform(500,400,1200,400,'b')
+PT2 = platform(200,200,200,500,'b')
+PT3 = platform(200,300,400,465,'b')
+PT4 = platform(300,400,600,400,'b')
+PT5 = platform(500,400,1200,400,'b')
 platform(100,200,1600,200,'b')
 platform(100,200,1800,400,'b')
 platform(100,200,2000,400,'b')
@@ -155,12 +164,26 @@ platform(200,40,4800,330,'b')
 platform(40,40,4500,270,'b')
 platform(600,1000,5100,470,'b')
 #*************************************************
+# Testing player, traps, and sprites, etc.
+Players = pygame.sprite.Group()
+traps = pygame.sprite.Group() 
 
 P1 = Player()
 all_sprites.add(P1)
 platforms.add(PT1)
-enemy1 = Enemy(random.randint(100, 800), 0, PT1)
-enemies.add(enemy1)
+
+trap1 = Trap(25, 25, PT3,1)
+trap2 = Trap(50, 50, PT4,1)
+trap3 = Trap(20, 20, PT2,1)
+trap4 = Trap(50, 50, PT5,1)
+
+traps.add(trap1)
+traps.add(trap2)
+traps.add(trap3)
+traps.add(trap4)
+
+for trap in traps:
+    all_sprites.add(trap)
 
 def play():
 
@@ -170,7 +193,7 @@ def play():
 
         window.blit(BG, (0, 0))
 
-        hits = pygame.sprite.spritecollide(P1, enemies, False)
+        hits = pygame.sprite.spritecollide(P1, traps, False)
         for event in pygame.event.get():
             if event.type == QUIT:
              pygame.quit()
@@ -188,8 +211,6 @@ def play():
              window.blit(entity.surf, entity.rect)
              entity.move()       
 
-        enemies.update()
-        enemies.draw(window)
 
         health_text = font.render(f"Health: {P1.health}", True, (255, 255, 255))
         window.blit(health_text, (10,10))
