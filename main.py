@@ -1,6 +1,6 @@
+from contextlib import redirect_stderr
 import sys
 import pygame
-import random
 from pygame.locals import *
 from Button import Button
 
@@ -17,6 +17,8 @@ FramePerSecond = pygame.time.Clock()
 font = pygame.font.SysFont(None, 30)
 window = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption("2D Game")
+all_sprites = pygame.sprite.Group()
+platforms = pygame.sprite.Group()
 
 def get_font(size): # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/font.ttf", size)
@@ -33,7 +35,7 @@ class Player(pygame.sprite.Sprite):
         self.acc = vec(0,0)
         self.health = 100
         self.immunity_frames = 0
-    
+
     def move(self):
         self.acc = vec(0,0.5)
  
@@ -69,53 +71,99 @@ class Player(pygame.sprite.Sprite):
                 self.surf.set_alpha(255)
         else:
             self.surf.set_alpha(255)
-                
 
+         
 class platform(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.surf = pygame.Surface((random.randint(50,100), 12))
-        self.surf.fill((0,255,0))
-        self.rect = self.surf.get_rect(center = (random.randint(0,screenWidth-10), random.randint(0, screenHeight-30)))
+    '''
+    Class that will create the platforms the player will stand and traverse on
+    '''
+    def __init__(self,x,y,posx,posy,color):
+        w,h,Posx,PosY,c= x,y,posx,posy,color
+        if c == 'r':
+            c = (200,0,0)
+        if c == 'g':
+            c = (0,200,0)
+        if c == 'b':
+            c = (0,0,200)
+        if c == 'w':
+            c = (255,255,255)
+            
 
+        super().__init__()
+        self.surf = pygame.Surface((w, h))
+        self.surf.fill(c)
+        self.rect = self.surf.get_rect(center = ((Posx,PosY)))
+        
+        all_sprites.add(self)   
+        platforms.add(self)
+  
+    def move(self):
+        pass
+
+class Trap(pygame.sprite.Sprite):
+    '''
+    Class that will create traps that will hurt the player (works similar to platform)
+    '''
+    def __init__(self,x,y,platform):
+        
+        super().__init__()
+        self.surf = pygame.Surface((x, y))
+        self.surf.fill((255,255,0))
+        self.rect = self.surf.get_rect()
+        self.platform = platform
+        self.rect.midbottom = self.platform.rect.midtop
+        
+        all_sprites.add(self)   
+        platforms.add(self)
 
     def move(self):
         pass
 
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, platform):
-        super().__init__()
-        self.image = pygame.Surface((50, 50))
-        self.image.fill((255,0,0))
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = platform.rect.top - self.rect.height
+#Level 1 Generation*******************************************************
+PT1 = platform(screenWidth , 20,0,screenHeight,'g') # base platform
+PT2 = platform(200,200,200,500,'b')
+PT3 = platform(200,300,400,465,'b')
+PT4 = platform(300,400,600,400,'b')
+PT5 = platform(500,400,1200,400,'b')
+platform(100,200,1600,200,'b')
+platform(100,200,1800,400,'b')
+platform(100,200,2000,400,'b')
+platform(500,30,2720,400,'b')
+platform(475,30,3000,300,'b')
+platform(475,30,3300,400,'b')
+platform(500,40,4090,170,'w') # level 1 end goal
+platform(200,40,4600,470,'b')
+platform(200,40,4800,330,'b')
+platform(40,40,4500,270,'b')
+platform(600,1000,5100,470,'b')
+#*************************************************
 
-enemies = pygame.sprite.Group() 
-PT1 = platform()
+# Testing player, traps, and sprites, etc.
+Players = pygame.sprite.Group()
+traps = pygame.sprite.Group() 
+
 P1 = Player()
-
-all_sprites = pygame.sprite.Group()
-all_sprites.add(PT1)
+Players.add(P1)
 all_sprites.add(P1)
 
-platforms = pygame.sprite.Group()
-platforms.add(PT1)
+trap1 = Trap(25, 25, PT3)
+trap2 = Trap(50, 50, PT4)
+trap3 = Trap(20, 20, PT2)
+trap4 = Trap(50, 50, PT5)
 
-for x in range(random.randint(5, 6)):
-    pl = platform()
-    platforms.add(pl)
-    all_sprites.add(pl)
+traps.add(trap1)
+traps.add(trap2)
+traps.add(trap3)
+traps.add(trap4)
 
-enemy1 = Enemy(random.randint(100, 800), 0, PT1)
-enemies.add(enemy1)
-   
+for trap in traps:
+    all_sprites.add(trap)
+
+
 def play():
-
     while True:
-
         window.fill("black")
-        hits = pygame.sprite.spritecollide(P1, enemies, False)
+        hits = pygame.sprite.spritecollide(P1, traps, False)
         for event in pygame.event.get():
             if event.type == QUIT:
              pygame.quit()
@@ -123,20 +171,18 @@ def play():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     P1.jump()
+
+        # Detects if there is collision between the player and the trap and if so, gives the player immunity frames and loses health
         if hits and P1.immunity_frames == 0:
             P1.health -= 50
             P1.immunity_frames = 60
 
-        window.fill((0,0,0))
         P1.update()
 
         for entity in all_sprites:
              window.blit(entity.surf, entity.rect)
              entity.move()       
         
-        enemies.update()
-        enemies.draw(window)
-
         health_text = font.render(f"Health: {P1.health}", True, (255, 255, 255))
         window.blit(health_text, (10,10))
 
@@ -147,6 +193,7 @@ def play():
                 PT1.surf = pygame.Surface((screenWidth, 20))
                 PT1.surf.fill((255,0,0))
                 PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
+            
 
         if P1.rect.left >= screenWidth / 3:
             P1.pos.x -= abs(P1.vel.x)
@@ -155,6 +202,8 @@ def play():
                 PT1.surf = pygame.Surface((screenWidth, 20))
                 PT1.surf.fill((255,0,0))
                 PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
+
+        # Checks whenever player health is equal or below zero in which case produces a game over screen
         if P1.health <= 0:
             game_over_surf = pygame.Surface((screenWidth, screenHeight))
             game_over_surf.fill((0,0,0))
@@ -203,4 +252,4 @@ def main_menu():
                     sys.exit()
 
         pygame.display.update()
-main_menu()     
+main_menu()   
