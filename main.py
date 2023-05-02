@@ -14,8 +14,12 @@ ACC = 0.5
 FRIC = -0.09
 FPS = 60
 
+win_sound = pygame.mixer.Sound("assets/fanfare.wav")
+
 FramePerSecond = pygame.time.Clock()
 font = pygame.font.SysFont(None, 30)
+MBG = pygame.image.load("assets/mainmenu.jpg")
+BG = pygame.image.load("assets/background.jpg")
 window = pygame.display.set_mode((screenWidth, screenHeight))
 pygame.display.set_caption("2D Game")
 all_sprites = pygame.sprite.Group()
@@ -27,8 +31,8 @@ def get_font(size): # Returns Press-Start-2P in the desired size
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.surf = pygame.Surface((30, 30))
-        self.surf.fill((128, 255, 40))
+        self.image = pygame.image.load("assets/player.png")
+        self.surf = pygame.image.load("assets/player.png")
         self.rect = self.surf.get_rect()
 
         self.pos = vec((10, 360))
@@ -52,18 +56,33 @@ class Player(pygame.sprite.Sprite):
         self.pos += self.vel + 0.5 * self.acc
      
         self.rect.midbottom = self.pos
-    
-    def jump(self):
+        
+        self.jumping = False
+
+    def jump(self): 
         hits = pygame.sprite.spritecollide(self, platforms, False)
-        if hits:
-            self.vel.y = -15
+        if hits and not self.jumping:
+           self.jumping = True
+           self.vel.y = -15
+ 
+    def cancel_jump(self):
+        if self.jumping:
+            if self.vel.y < -3:
+                self.vel.y = -3
 
     def update(self):
         hits = pygame.sprite.spritecollide(P1, platforms, False)
         if P1.vel.y > 0:
             if hits:
-                self.vel.y = 0
-                self.pos.y = hits[0].rect.top + 1
+                if self.pos.y < hits[0].rect.bottom:               
+                    self.pos.y = hits[0].rect.top +1
+                    self.vel.y = 0
+                    self.jumping = False
+
+        if hits:
+            if self.pos.y < hits[0].rect.bottom and hits[0].color == 'w':
+                win()
+
         if self.immunity_frames > 0:
             self.immunity_frames -= 1
             if self.immunity_frames % 2 == 0:
@@ -72,6 +91,13 @@ class Player(pygame.sprite.Sprite):
                 self.surf.set_alpha(255)
         else:
             self.surf.set_alpha(255)
+
+        if P1.vel.x > 0:
+            self.image = pygame.image.load("assets/player.png")
+            self.surf = pygame.image.load("assets/player.png")
+        elif P1.vel.x < 0:
+            self.image = pygame.image.load("assets/player2.png")
+            self.surf = pygame.image.load("assets/player2.png")
                 
 
 class platform(pygame.sprite.Sprite):
@@ -79,16 +105,17 @@ class platform(pygame.sprite.Sprite):
     def __init__(self,x,y,posx,posy,color):
         w,h,Posx,PosY,c= x,y,posx,posy,color
         if c == 'r':
-            c = (200,0,0)
+            c = (0,0,0)
         if c == 'g':
-            c = (0,200,0)
+            c = (112,128,144)
         if c == 'b':
-            c = (0,0,200)
+            c = (105,105,105)
         if c == 'w':
             c = (255,255,255)
             
 
         super().__init__()
+        self.color = color
         self.surf = pygame.Surface((w, h))
         self.surf.fill(c)
         self.rect = self.surf.get_rect(center = ((Posx,PosY)))
@@ -140,6 +167,9 @@ def play():
     while True:
 
         window.fill("black")
+
+        window.blit(BG, (0, 0))
+
         hits = pygame.sprite.spritecollide(P1, enemies, False)
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -169,7 +199,7 @@ def play():
             for plat in platforms:
                 plat.rect.x += abs(P1.vel.x)
                 PT1.surf = pygame.Surface((screenWidth, 20))
-                PT1.surf.fill((0,200,0))
+                PT1.surf.fill((112,128,144))
                 PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
 
         if P1.rect.left >= screenWidth / 3:
@@ -177,7 +207,7 @@ def play():
             for plat in platforms:
                 plat.rect.x -= abs(P1.vel.x)
                 PT1.surf = pygame.Surface((screenWidth, 20))
-                PT1.surf.fill((0,200,0))
+                PT1.surf.fill((112,128,144))
                 PT1.rect = PT1.surf.get_rect(center = (screenWidth/2, screenHeight - 10))
 
         if P1.health <= 0:
@@ -200,9 +230,11 @@ def main_menu():
 
     while True:   
 
+        window.blit(MBG, (0, 0))
+
         MENU_MOUSE_POS = pygame.mouse.get_pos()
 
-        MENU_TEXT = get_font(80).render("MAIN MENU", True, "#b68f40")
+        MENU_TEXT = get_font(50).render("Working Title", True, "#b68f40")
         MENU_RECT = MENU_TEXT.get_rect(center=(450, 100))
 
         PLAY_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"), pos=(450, 250), 
@@ -228,4 +260,19 @@ def main_menu():
                     sys.exit()
 
         pygame.display.update()
+
+def win():
+    game_over_surf = pygame.Surface((screenWidth, screenHeight))
+    game_over_surf.fill((155,25,34))
+    game_over_text = font.render("YOU WIN!", True, (255, 255, 255))
+    pygame.mixer.Sound.play(win_sound)
+    pygame.mixer.music.stop()
+    game_over_rect = game_over_text.get_rect(center=(screenWidth/2, screenHeight/2))
+    game_over_surf.blit(game_over_text, game_over_rect)
+    window.blit(game_over_text, (screenWidth/2 - 70, screenHeight/2 - 20))
+    window.blit(game_over_surf, (0,0))
+    pygame.display.update()
+    pygame.time.wait(5000)
+    pygame.quit()
+    sys.exit()
 main_menu()     
