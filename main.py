@@ -102,7 +102,6 @@ def play():
                 if event.key == pygame.K_UP:
                     P1.jump()
 
-        window.fill((0,0,0))
         P1.update()
 
         for entity in all_sprites:
